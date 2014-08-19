@@ -10,7 +10,7 @@ module Savable
   private
   
   def row_exists?
-    self.class.find_by_id(@id) != nil
+    @id
   end
   
   def insert_into_db
