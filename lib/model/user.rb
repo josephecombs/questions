@@ -62,7 +62,7 @@ class User
           COUNT(DISTINCT questions.id) AS average_karma
       FROM
         questions
-      INNER JOIN
+      LEFT OUTER JOIN
         question_likes
       ON
         questions.id = question_likes.question_id
