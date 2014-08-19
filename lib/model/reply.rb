@@ -65,7 +65,7 @@ class Reply
   end
   
   def initialize(options)
-    @id = options["id"] 
+    @id = options["id"]
     @body = options["body"]
     @question_id = options["question_id"]
     @parent_reply_id = options["parent_reply_id"]
