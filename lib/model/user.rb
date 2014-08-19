@@ -1,6 +1,8 @@
 require_relative 'questions_database'
 
 class User
+  attr_accessor :fname, :lname
+
   def self.find_by_id(id)
     result = QuestionsDatabase.instance.execute(<<-SQL, id)
       SELECT
@@ -31,8 +33,6 @@ class User
     User.new(result.first)
   end
   
-  attr_accessor :fname, :lname
-  
   def initialize(options)
     @id = options["id"]
     @fname = options["fname"]
@@ -56,33 +56,53 @@ class User
   end
   
   def average_karma
-    result = QuestionsDatabase.instance.execute(<<-SQL, @id, @id)
+    query = <<-SQL
       SELECT
-        CAST((SELECT 
-                COUNT(*) total_likes
-              FROM
-                question_likes
-              INNER JOIN 
-                users
-              ON 
-                question_likes.user_id = users.id
-              WHERE 
-                question_id IN (SELECT
-                                  questions.id
-                                FROM
-                                  questions
-                                WHERE
-                                  author_id = ?))
-        AS FLOAT) / (
-          SELECT
-            COUNT(*)
-          FROM
-            questions
-          WHERE
-            author_id = ?
-        ) as average_karma;
+        CAST(COUNT(question_likes.question_id) AS FLOAT) / 
+          COUNT(DISTINCT questions.id) AS average_karma
+      FROM
+        questions
+      INNER JOIN
+        question_likes
+      ON
+        questions.id = question_likes.question_id
+      WHERE
+        questions.author_id = ?;
+    SQL
+    result = QuestionsDatabase.instance.execute(query, @id)
+    result.first["average_karma"]
+  end
+  
+  def save
+    user_exists? ? update_db : insert_into_db
+  end
+  
+  private
+  
+  def user_exists?
+    User.find_by_id(@id) != nil
+  end
+  
+  def insert_into_db
+    QuestionsDatabase.instance.execute(<<-SQL, @fname, @lname)
+      INSERT INTO
+        users (fname, lname)
+      VALUES
+        (?, ?);
     SQL
     
-    result.first["average_karma"]
+    @id = QuestionsDatabase.instance.last_insert_row_id
+  end
+  
+  def update_db
+    QuestionsDatabase.instance.execute(<<-SQL, @fname, @lname, @id)
+      UPDATE 
+        users
+      SET
+        fname = ?,
+        lname = ?
+      WHERE
+        id = ?;
+    SQL
   end
 end

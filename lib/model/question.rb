@@ -1,6 +1,8 @@
 require_relative 'questions_database'
 
 class Question
+  attr_accessor :title, :body, :author_id
+  
   def self.find_by_id(id)
     result = QuestionsDatabase.instance.execute(<<-SQL, id)
       SELECT
@@ -64,5 +66,38 @@ class Question
   
   def num_likes
     QuestionLike.num_likes_for_question_id(@id)
+  end
+  
+  def save
+    question_exists? ? update_db : insert_into_db
+  end
+  
+  private
+  def question_exists?
+    Question.find_by_id(@id) != nil
+  end
+  
+  def insert_into_db
+    QuestionsDatabase.instance.execute(<<-SQL, @title, @body, @author_id)
+      INSERT INTO
+        questions (title, body, author_id)
+      VALUES
+        (?, ?, ?);
+    SQL
+    
+    @id = QuestionsDatabase.instance.last_insert_row_id
+  end
+  
+  def update_db
+    QuestionsDatabase.instance.execute(<<-SQL, @title, @body, @author_id, @id)
+      UPDATE 
+        questions
+      SET
+        title = ?,
+        body = ?,
+        author_id = ?
+      WHERE
+        id = ?;
+    SQL
   end
 end
