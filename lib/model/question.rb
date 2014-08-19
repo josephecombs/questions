@@ -1,12 +1,6 @@
 require_relative 'questions_database'
 
 class Question
-  # id INTEGER PRIMARY KEY,
-  #  title VARCHAR(255) NOT NULL,
-  #  body VARCHAR(255),
-  #  author_id INTEGER NOT NULL,
-  #
-  #  FOREIGN KEY (author_id) REFERENCES users(id)
   def self.find_by_id(id)
     result = QuestionsDatabase.instance.execute(<<-SQL, id)
       SELECT
@@ -14,7 +8,7 @@ class Question
       FROM
         questions
       WHERE
-        id=?;
+        id = ?;
     SQL
     
     return nil if result.empty?
@@ -29,12 +23,20 @@ class Question
       FROM
         questions
       WHERE
-        author_id=?;
+        author_id = ?;
     SQL
 
     return nil if result.empty?
  
     result.map { |row| Question.new(row) }
+  end
+  
+  def self.most_followed(limit)
+    QuestionFollower.most_followed_questions(limit)
+  end
+  
+  def self.most_liked(limit)
+    QuestionLike.most_liked_questions(limit)
   end
 
   def initialize(options)
@@ -54,5 +56,13 @@ class Question
   
   def followers
     QuestionFollower.followers_for_question_id(@id)
+  end
+  
+  def likers
+    QuestionLike.likers_for_question_id(@id)
+  end
+  
+  def num_likes
+    QuestionLike.num_likes_for_question_id(@id)
   end
 end

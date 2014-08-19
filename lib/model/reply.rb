@@ -1,15 +1,6 @@
 require_relative 'questions_database'
 
 class Reply
-  # id INTEGER PRIMARY KEY,
-  # body VARCHAR(255) NOT NULL,
-  # question_id INTEGER NOT NULL,
-  # parent_reply_id INTEGER,
-  # author_id INTEGER NOT NULL,
-  #
-  # FOREIGN KEY (question_id) REFERENCES questions(id),
-  # FOREIGN KEY (parent_reply_id) REFERENCES replies(id),
-  # FOREIGN KEY (author_id) REFERENCES users(id)
   def self.find_by_id(id)
     result = QuestionsDatabase.instance.execute(<<-SQL, id)
       SELECT
@@ -17,7 +8,7 @@ class Reply
       FROM
         replies
       WHERE
-        id=?;
+        id = ?;
     SQL
     
     return nil if result.empty?
@@ -32,7 +23,7 @@ class Reply
       FROM
         replies
       WHERE
-        question_id=?;
+        question_id = ?;
     SQL
   
     return nil if result.empty?
@@ -47,7 +38,7 @@ class Reply
       FROM
         replies
       WHERE
-        author_id=?;
+        author_id = ?;
     SQL
 
     return nil if result.empty?
@@ -63,7 +54,7 @@ class Reply
       FROM
         replies
       WHERE
-        parent_reply_id=?;
+        parent_reply_id = ?;
     SQL
 
     return nil if result.empty?

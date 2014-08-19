@@ -1,26 +1,6 @@
 require_relative 'questions_database'
 
-class QuestionFollower
-  # user_id INTEGER NOT NULL,
-  # question_id INTEGER NOT NULL,
-  #
-  # FOREIGN KEY (user_id) REFERENCES users(id),
-  # FOREIGN KEY (question_id) REFERENCES questions(id)
-  def self.find_by_id(id)
-    result = QuestionsDatabase.instance.execute(<<-SQL, id)
-      SELECT 
-        *
-      FROM
-        question_followers
-      WHERE 
-        id = ?;
-    SQL
-    
-    return nil if result.empty?
-    
-    QuestionFollower.new(result.first)
-  end
-  
+class QuestionFollower 
   def self.followers_for_question_id(question_id)
     result = QuestionsDatabase.instance.execute(<<-SQL, question_id)
       SELECT 
@@ -37,7 +17,7 @@ class QuestionFollower
     
     return nil if result.empty?
     
-    result.map { |row| User.new(row)}
+    result.map { |row| User.new(row) }
   end
   
   def self.followed_questions_for_user_id(user_id)
@@ -56,7 +36,29 @@ class QuestionFollower
     
     return nil if result.empty?
     
-    result.map { |row| Question.new(row)}
+    result.map { |row| Question.new(row) }
+  end
+  
+  def self.most_followed_questions(limit)
+    result = QuestionsDatabase.instance.execute(<<-SQL, limit)
+      SELECT
+        questions.*
+      FROM
+        question_followers
+      INNER JOIN
+        questions
+      ON
+        question_followers.question_id=questions.id
+      GROUP BY
+        questions.id
+      ORDER BY
+        COUNT(questions.id) DESC
+      LIMIT ?;
+    SQL
+    
+    return nil if result.empty?
+    
+    result.map { |row| Question.new(row) }
   end
   
   def initialize(options)
