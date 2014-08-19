@@ -1,8 +1,11 @@
 require_relative 'questions_database'
+require_relative 'savable'
 
 class User
   attr_accessor :fname, :lname
 
+  include Savable
+  
   def self.find_by_id(id)
     result = QuestionsDatabase.instance.execute(<<-SQL, id)
       SELECT
@@ -73,36 +76,8 @@ class User
     result.first["average_karma"]
   end
   
-  def save
-    user_exists? ? update_db : insert_into_db
-  end
-  
-  private
-  
-  def user_exists?
-    User.find_by_id(@id) != nil
-  end
-  
-  def insert_into_db
-    QuestionsDatabase.instance.execute(<<-SQL, @fname, @lname)
-      INSERT INTO
-        users (fname, lname)
-      VALUES
-        (?, ?);
-    SQL
-    
-    @id = QuestionsDatabase.instance.last_insert_row_id
-  end
-  
-  def update_db
-    QuestionsDatabase.instance.execute(<<-SQL, @fname, @lname, @id)
-      UPDATE 
-        users
-      SET
-        fname = ?,
-        lname = ?
-      WHERE
-        id = ?;
-    SQL
+  protected
+  def table_name
+    "users"
   end
 end

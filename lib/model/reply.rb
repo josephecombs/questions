@@ -1,7 +1,10 @@
 require_relative 'questions_database'
+require_relative 'savable'
 
 class Reply
   attr_accessor :body, :question_id, :parent_reply_id, :author_id
+  
+  include Savable
 
   def self.find_by_id(id)
     result = QuestionsDatabase.instance.execute(<<-SQL, id)
@@ -89,43 +92,8 @@ class Reply
     Reply.find_by_parent_reply_id(@parent_reply_id)
   end
   
-  def save
-    reply_exists? ? update_db : insert_into_db
-  end
-  
-  private
-  def reply_exists?
-    Reply.find_by_id(@id) != nil
-  end
-  
-  def insert_into_db
-    query = <<-SQL
-      INSERT INTO
-        replies (body, question_id, parent_reply_id, author_id)
-      VALUES
-        (?, ?, ?, ?);
-    SQL
-
-    QuestionsDatabase.instance.execute(query, @body, @question_id, 
-      @parent_reply_id, @author_id)
-      
-    @id = QuestionsDatabase.instance.last_insert_row_id  
-  end
-  
-  def update_db
-    query = <<-SQL
-      UPDATE 
-        replies
-      SET
-        body = ?,
-        question_id = ?,
-        parent_reply_id = ?,
-        author_id = ?
-      WHERE
-        id = ?;
-    SQL
-
-    QuestionsDatabase.instance.execute(query, @body, @question_id,
-      @parent_reply_id, @author_id, @id)
+  protected
+  def table_name
+    "replies"
   end
 end
