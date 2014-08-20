@@ -14,9 +14,9 @@ module Savable
   end
   
   def insert_into_db
-    ivs = self.instance_variables - [:@id]
-    columns = ivs.map { |iv| iv[1..-1] }
-    values = ivs.map { |iv| self.instance_variable_get(iv) }
+    ivs = ivs_sans_id
+    columns = ivs_to_strings(ivs)
+    values = ivs_to_values(ivs)
     
     query = <<-SQL
       INSERT INTO
@@ -30,9 +30,9 @@ module Savable
   end
   
   def update_db
-    ivs = self.instance_variables - [:@id]
-    columns = ivs.map { |iv| "#{ iv[1..-1] } = ?" }
-    values = ivs.map { |iv| self.instance_variable_get(iv) }
+    ivs = ivs_sans_id
+    columns = ivs_to_strings(ivs).map { |iv| "#{ iv } = ?" }
+    values = ivs_to_values(ivs)
     
     query = <<-SQL
       UPDATE
@@ -44,5 +44,17 @@ module Savable
     SQL
 
     QuestionsDatabase.instance.execute(query, *values)
+  end
+  
+  def ivs_sans_id
+    self.instance_variables - [:@id]
+  end
+  
+  def ivs_to_strings(ivs)
+    ivs.map { |iv| iv[1..-1] }
+  end
+  
+  def ivs_to_values(ivs)
+    ivs.map { |iv| self.instance_variable_get(iv) }
   end
 end
